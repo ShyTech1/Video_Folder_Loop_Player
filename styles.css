@@ -1,31 +1,51 @@
-button {
-  outline: none;
-  border: 4px solid green;
-  padding: 10px 20px;
-  font-size: 1rem;
-  font-weight: bold;
-  background: none;
-  transition: all 0.2s ease-in-out;
-}
-.play-area {
-  display: grid;
-  width: 300px;
-  height: 300px;
-  grid-template-columns: auto auto auto;
-}
-.block {
-  display: flex;
-  width: 100px;
-  height: 100px;
-  align-items: center;
-  justify-content: center;
-  font-size: 3rem;
-  font-weight: bold;
-  border: 3px solid black;
-  transition: background 0.2s ease-in-out;
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #101014;
+  color: #f1f1f1;
 }
 
-.block:hover {
+.app {
+  min-height: 100vh;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+button {
+  border: none;
+  border-radius: 6px;
+  padding: 10px 14px;
+  background: #3366ff;
+  color: white;
   cursor: pointer;
-  background: #0ff30f;
+}
+
+.folder-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+}
+
+.video-player {
+  width: 100%;
+  max-width: 960px;
+  aspect-ratio: 16 / 9;
+  background: black;
+}
+
+.empty-state {
+  width: 100%;
+  max-width: 960px;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #444;
 }
