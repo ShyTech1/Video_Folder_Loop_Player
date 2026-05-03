@@ -8,9 +8,14 @@ const defaultSettings: Settings = {
   fullscreen: false
 };
 
+type StoreApi = {
+  get: <K extends keyof Settings>(key: K, defaultValue: Settings[K]) => Settings[K];
+  set: <K extends keyof Settings>(key: K, value: Settings[K]) => void;
+};
+
 const store = new ElectronStore<Settings>({
   defaults: defaultSettings
-});
+}) as unknown as StoreApi;
 
 export function getSettings(): Settings {
   return {
