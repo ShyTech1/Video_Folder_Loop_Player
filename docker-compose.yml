@@ -1,0 +1,22 @@
+services:
+  app-ci:
+    build:
+      context: .
+      target: ci
+    environment:
+      - npm_config_registry=${NPM_CONFIG_REGISTRY:-https://registry.npmjs.org/}
+      - HTTP_PROXY=${HTTP_PROXY:-}
+      - HTTPS_PROXY=${HTTPS_PROXY:-}
+      - NO_PROXY=${NO_PROXY:-}
+    command: sh -lc "npm run typecheck && npm run audit:prod"
+
+  app-build:
+    build:
+      context: .
+      target: build
+    environment:
+      - npm_config_registry=${NPM_CONFIG_REGISTRY:-https://registry.npmjs.org/}
+      - HTTP_PROXY=${HTTP_PROXY:-}
+      - HTTPS_PROXY=${HTTPS_PROXY:-}
+      - NO_PROXY=${NO_PROXY:-}
+    command: npm run build
