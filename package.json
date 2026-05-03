@@ -4,15 +4,13 @@
   "private": true,
   "main": "dist/main/main.js",
   "scripts": {
-    "dev": "concurrently \"npm:dev:renderer\" \"npm:dev:electron\"",
+    "dev": "concurrently \"vite\" \"wait-on tcp:5173 && electron .\"",
     "build": "npm run build:main && vite build",
     "build:main": "tsc -p tsconfig.main.json",
-    "start": "npm run build:main && electron .",
+    "start": "electron .",
     "typecheck": "tsc --noEmit -p tsconfig.main.json && tsc --noEmit -p tsconfig.renderer.json",
     "audit:prod": "npm audit --omit=dev --audit-level=high",
-    "audit:full": "npm audit --audit-level=moderate",
-    "dev:renderer": "vite",
-    "dev:electron": "npm run build:main && wait-on tcp:5173 && electron ."
+    "audit:full": "npm audit --audit-level=moderate"
   },
   "dependencies": {
     "chokidar": "^4.0.3",
