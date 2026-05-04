@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { FolderSelector } from './FolderSelector';
 import { PlaylistManager } from './PlaylistManager';
-import { VideoPlayer } from './VideoPlayer';
+import { VideoPlayer, type VideoPlayerHandle } from './VideoPlayer';
 import type { Settings, VideoFile } from './types';
 
 const defaultSettings: Settings = {
   folderPath: '',
   muted: true,
+  volume: 0.6,
   showControls: false,
   fullscreen: false,
   playlistOrder: []
@@ -27,10 +28,26 @@ export default function App() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [playlist, setPlaylist] = useState<VideoFile[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [isPaused, setIsPaused] = useState(false);
+  const [removingVideoPath, setRemovingVideoPath] = useState<string | null>(null);
+  const videoPlayerRef = useRef<VideoPlayerHandle>(null);
 
   const readyPlaylist = useMemo(() => playlist.filter((video) => video.status !== 'failed'), [playlist]);
+  const nextVideo = useMemo(() => {
+    if (readyPlaylist.length <= 1) {
+      return null;
+    }
+
+    const safeIndex = currentIndex >= readyPlaylist.length ? 0 : currentIndex;
+    return readyPlaylist[(safeIndex + 1) % readyPlaylist.length];
+  }, [readyPlaylist, currentIndex]);
 
   const currentVideo = useMemo(() => {
+    if (removingVideoPath) {
+      return null;
+    }
+
     if (readyPlaylist.length === 0) {
       return null;
     }
@@ -38,7 +55,7 @@ export default function App() {
       return readyPlaylist[0];
     }
     return readyPlaylist[currentIndex];
-  }, [readyPlaylist, currentIndex]);
+  }, [readyPlaylist, currentIndex, removingVideoPath]);
 
   useEffect(() => {
     if (!hydrated) {
@@ -54,6 +71,7 @@ export default function App() {
     setPlaylist(ordered);
     setSettings((current) => ({ ...current, folderPath, playlistOrder: ordered.map((video) => video.id) }));
     setCurrentIndex(0);
+    setIsPaused(false);
     await window.electronAPI.startWatching(folderPath);
   };
 
@@ -77,6 +95,7 @@ export default function App() {
         const ordered = orderPlaylist(scanned, saved.playlistOrder);
         setPlaylist(ordered);
         setSettings((current) => ({ ...current, playlistOrder: ordered.map((video) => video.id) }));
+        setIsPaused(false);
         await window.electronAPI.startWatching(saved.folderPath);
       }
       setHydrated(true);
@@ -121,6 +140,7 @@ export default function App() {
       setSettings((prev) => ({ ...prev, folderPath: '', playlistOrder: [] }));
       setPlaylist([]);
       setCurrentIndex(0);
+      setIsPaused(false);
     });
 
     const offFailed = window.electronAPI.onFileFailed((video) => {
@@ -144,6 +164,7 @@ export default function App() {
       }
       return (index + 1) % readyPlaylist.length;
     });
+    setIsPaused(false);
   };
 
   const handleVideoError = () => {
@@ -162,9 +183,30 @@ export default function App() {
     setSettings(next);
   };
 
+  const setVolume = (event: ChangeEvent<HTMLInputElement>) => {
+    const nextVolume = Number(event.target.value);
+    setSettings((current) => ({
+      ...current,
+      volume: nextVolume,
+      muted: nextVolume === 0 ? true : false
+    }));
+  };
+
   const toggleFullscreen = async () => {
     const next = { ...settings, fullscreen: !settings.fullscreen };
     setSettings(next);
+  };
+
+  const togglePaused = () => {
+    if (!currentVideo) {
+      return;
+    }
+
+    if (isPaused) {
+      videoPlayerRef.current?.play();
+    } else {
+      videoPlayerRef.current?.pause();
+    }
   };
 
   const moveVideo = (videoId: string, direction: -1 | 1) => {
@@ -194,6 +236,7 @@ export default function App() {
       return;
     }
 
+    setStatusMessage('');
     const addedVideos = await window.electronAPI.addVideosToFolder(settings.folderPath, sourcePaths);
     setPlaylist((current) => {
       const next = [...current];
@@ -214,38 +257,135 @@ export default function App() {
       return;
     }
 
-    await window.electronAPI.removeVideo(settings.folderPath, videoPath);
+    const removingCurrent = currentVideo?.path === videoPath;
+    setStatusMessage('');
+
+    let removedVideo: VideoFile | undefined;
+    const previousIndex = currentIndex;
+
+    if (removingCurrent) {
+      setRemovingVideoPath(videoPath);
+      videoPlayerRef.current?.clear();
+      setIsPaused(false);
+    }
+
     setPlaylist((current) => {
+      removedVideo = current.find((video) => video.path === videoPath);
       const next = current.filter((video) => video.path !== videoPath);
       setSettings((prev) => ({ ...prev, playlistOrder: next.map((video) => video.id) }));
       return next;
     });
 
-    if (currentVideo?.path === videoPath) {
+    if (removingCurrent) {
       setCurrentIndex(0);
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 250));
+
+    try {
+      await window.electronAPI.removeVideo(settings.folderPath, videoPath);
+      setRemovingVideoPath(null);
+    } catch (error) {
+      setRemovingVideoPath(null);
+      if (removedVideo) {
+        setPlaylist((current) => {
+          const restoreIndex = Math.min(previousIndex, current.length);
+          const next = [...current];
+          next.splice(restoreIndex, 0, removedVideo as VideoFile);
+          setSettings((prev) => ({ ...prev, playlistOrder: next.map((video) => video.id) }));
+          return next;
+        });
+        setCurrentIndex(previousIndex);
+      }
+      const message = error instanceof Error ? error.message : 'Unable to remove the selected video.';
+      setStatusMessage(message);
     }
   };
 
   return (
     <main className="app">
-      <h1>Video Folder Loop Player</h1>
+      <header className="hero-panel">
+        <div className="hero-copy">
+          <p className="eyebrow">Wide Screen Activity Loop</p>
+          <h1>Keep the school display simple, calm, and easy to manage.</h1>
+          <p className="hero-description">
+            Add, remove, and reorder videos while the screen keeps playing. The current item stays clear, and the
+            queue stays easy to understand from a distance.
+          </p>
+        </div>
+        <div className="hero-stats" aria-label="Playback overview">
+          <div className="stat-card">
+            <span className="stat-label">Now playing</span>
+            <strong>{currentVideo?.name || 'No video selected'}</strong>
+          </div>
+          <div className="stat-card">
+            <span className="stat-label">Next up</span>
+            <strong>{nextVideo?.name || 'Waiting for more videos'}</strong>
+          </div>
+          <div className="stat-card">
+            <span className="stat-label">Queue size</span>
+            <strong>{readyPlaylist.length} file{readyPlaylist.length === 1 ? '' : 's'}</strong>
+          </div>
+        </div>
+      </header>
+
       <FolderSelector folderPath={settings.folderPath} onSelectFolder={handleSelectFolder} />
+
       <div className="app-shell">
         <section className="player-panel">
-          <p>Now playing: {currentVideo?.name || 'None'}</p>
-          <p>Total videos: {readyPlaylist.length}</p>
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Display Preview</p>
+              <h2>{currentVideo?.name || 'Ready for the first activity video'}</h2>
+              <p className="section-description">
+                {nextVideo ? `Next in line: ${nextVideo.name}` : 'Add videos to build the loop.'}
+              </p>
+            </div>
+            <div className="player-status">
+              <span className={`status-pill${isPaused ? ' is-paused' : ''}`}>
+                {currentVideo ? (isPaused ? 'Paused' : 'Playing') : 'Idle'}
+              </span>
+            </div>
+          </div>
+
+          {statusMessage ? <p className="status-message">{statusMessage}</p> : null}
           <div className="controls">
-            <button type="button" onClick={advanceToNext} disabled={readyPlaylist.length === 0}>Next Video</button>
-            <button type="button" onClick={setMuted}>{settings.muted ? 'Unmute' : 'Mute'}</button>
-            <button type="button" onClick={toggleFullscreen}>{settings.fullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</button>
+            <button type="button" onClick={advanceToNext} disabled={readyPlaylist.length === 0}>
+              Next Video
+            </button>
+            <button type="button" onClick={togglePaused} disabled={!currentVideo}>
+              {isPaused ? 'Play' : 'Pause'}
+            </button>
+            <label className="volume-pill">
+              <span>Volume</span>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={settings.volume}
+                onChange={setVolume}
+                aria-label="Volume"
+              />
+            </label>
+            <button type="button" className="status-pill status-toggle" onClick={setMuted}>
+              Audio ({settings.muted ? 'Off' : 'On'})
+            </button>
+            <button type="button" onClick={toggleFullscreen}>
+              {settings.fullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+            </button>
           </div>
           <VideoPlayer
-            currentVideo={currentVideo}
-            muted={settings.muted}
-            showControls={settings.showControls}
-            fullscreen={settings.fullscreen}
+            ref={videoPlayerRef}
+              currentVideo={currentVideo}
+              muted={settings.muted}
+              volume={settings.volume}
+              showControls={settings.showControls}
+              fullscreen={settings.fullscreen}
+              paused={isPaused}
             onEnded={advanceToNext}
             onError={handleVideoError}
+            onPlaybackStateChange={setIsPaused}
           />
         </section>
 

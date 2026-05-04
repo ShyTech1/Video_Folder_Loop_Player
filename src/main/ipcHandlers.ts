@@ -1,5 +1,5 @@
-import { dialog, ipcMain } from 'electron';
-import { access, copyFile, unlink } from 'node:fs/promises';
+import { dialog, ipcMain, shell } from 'electron';
+import { access, copyFile } from 'node:fs/promises';
 import path from 'node:path';
 import { FolderWatcher } from './folderWatcher';
 import { getSettings, saveSettings } from './settingsStore';
@@ -11,9 +11,12 @@ const watcher = new FolderWatcher();
 const VIDEO_EXTENSIONS = ['mp4', 'webm', 'mov', 'mkv', 'avi'];
 
 function sanitizeSettings(input: Settings): Settings {
+  const nextVolume = typeof input.volume === 'number' && Number.isFinite(input.volume) ? input.volume : 0.6;
+
   return {
     folderPath: typeof input.folderPath === 'string' ? input.folderPath : '',
     muted: Boolean(input.muted),
+    volume: Math.min(1, Math.max(0, nextVolume)),
     showControls: Boolean(input.showControls),
     fullscreen: Boolean(input.fullscreen),
     playlistOrder: Array.isArray(input.playlistOrder)
@@ -123,7 +126,7 @@ export function registerIpcHandlers(window: BrowserWindow): void {
       throw new Error('Cannot remove files outside the selected folder.');
     }
 
-    await unlink(resolvedVideo);
+    await shell.trashItem(resolvedVideo);
   });
 
   ipcMain.handle('startWatching', async (_event, folderPath: string) => {
