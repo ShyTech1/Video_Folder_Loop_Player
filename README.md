@@ -57,12 +57,19 @@ The generated files are written to `release-artifacts/`:
 - `Video Folder Loop Player-Setup-<version>-x64.exe` is the recommended installer. This build supports automatic updates.
 - `Video Folder Loop Player-Portable-<version>-x64.exe` can be copied to another Windows computer, but should be updated manually by replacing it with a newer portable build.
 
-Automatic updates are published through GitHub Releases. To publish a new update:
+Automatic updates are published through GitHub Releases. To publish a new update, create a release branch whose version matches `package.json`:
 
 ```bash
-npm version patch
-git push
-git push --tags
+git switch staging
+npm version 1.0.1 --no-git-tag-version
+git add package.json package-lock.json
+git commit -m "Prepare release 1.0.1"
+git switch -c release/1.0.1
+git push -u origin release/1.0.1
 ```
 
-The `Release` GitHub Actions workflow builds the Windows installer, portable executable, and update metadata. Users who installed the setup version will receive updates from the matching GitHub release.
+The `Release` GitHub Actions workflow validates the branch, builds the Windows installer, portable executable, and update metadata, creates the tag, and publishes the GitHub Release. Users who installed the setup version will receive updates from the matching GitHub release.
+
+## Git strategy and releases
+
+This repo uses `staging` for QA, `main` for production source, and `release/x.y.z` branches for app releases. See [docs/git-strategy.md](docs/git-strategy.md) for the full workflow and required GitHub branch protection settings.
