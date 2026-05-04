@@ -1,6 +1,21 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, net, protocol } from 'electron';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { registerIpcHandlers } from './ipcHandlers';
+
+const devServerUrl = process.env.VITE_DEV_SERVER_URL ?? 'http://localhost:5173';
+const videoProtocolPrefix = 'local-video://file/';
+
+function registerVideoProtocol(): void {
+  protocol.handle('local-video', (request) => {
+    const encodedPath = request.url.slice(videoProtocolPrefix.length);
+    const fileUrl = pathToFileURL(decodeURIComponent(encodedPath)).toString();
+    return net.fetch(fileUrl, {
+      method: request.method,
+      headers: request.headers
+    });
+  });
+}
 
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -14,8 +29,8 @@ function createWindow(): BrowserWindow {
     }
   });
 
-  if (process.env.VITE_DEV_SERVER_URL) {
-    window.loadURL(process.env.VITE_DEV_SERVER_URL);
+  if (!app.isPackaged) {
+    window.loadURL(devServerUrl);
   } else {
     window.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
@@ -30,6 +45,7 @@ function createWindow(): BrowserWindow {
 }
 
 app.whenReady().then(() => {
+  registerVideoProtocol();
   createWindow();
 
   app.on('activate', () => {

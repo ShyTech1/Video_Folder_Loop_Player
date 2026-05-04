@@ -30,9 +30,7 @@ export function VideoPlayer({ currentVideo, muted, showControls, fullscreen, onE
       return '';
     }
 
-    const normalized = currentVideo.path.replace(/\\/g, '/');
-    const prefixed = normalized.startsWith('/') ? normalized : `/${normalized}`;
-    return encodeURI(`file://${prefixed}`);
+    return `local-video://file/${encodeURIComponent(currentVideo.path)}`;
   }, [currentVideo]);
 
   if (!currentVideo) {
