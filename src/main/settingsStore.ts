@@ -5,7 +5,8 @@ const defaultSettings: Settings = {
   folderPath: '',
   muted: true,
   showControls: false,
-  fullscreen: false
+  fullscreen: false,
+  playlistOrder: []
 };
 
 type StoreApi = {
@@ -22,7 +23,8 @@ export function getSettings(): Settings {
     folderPath: store.get('folderPath', defaultSettings.folderPath),
     muted: store.get('muted', defaultSettings.muted),
     showControls: store.get('showControls', defaultSettings.showControls),
-    fullscreen: store.get('fullscreen', defaultSettings.fullscreen)
+    fullscreen: store.get('fullscreen', defaultSettings.fullscreen),
+    playlistOrder: store.get('playlistOrder', defaultSettings.playlistOrder)
   };
 }
 
@@ -31,4 +33,5 @@ export function saveSettings(settings: Settings): void {
   store.set('muted', settings.muted);
   store.set('showControls', settings.showControls);
   store.set('fullscreen', settings.fullscreen);
+  store.set('playlistOrder', settings.playlistOrder);
 }

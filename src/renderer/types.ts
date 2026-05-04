@@ -14,13 +14,17 @@ export interface Settings {
   muted: boolean;
   showControls: boolean;
   fullscreen: boolean;
+  playlistOrder: string[];
 }
 
 export interface ElectronAPI {
   selectFolder: () => Promise<string | null>;
+  selectVideos: () => Promise<string[] | null>;
   getSettings: () => Promise<Settings>;
   saveSettings: (settings: Settings) => Promise<void>;
   scanFolder: (path: string) => Promise<VideoFile[]>;
+  addVideosToFolder: (folderPath: string, sourcePaths: string[]) => Promise<VideoFile[]>;
+  removeVideo: (folderPath: string, videoPath: string) => Promise<void>;
   startWatching: (path: string) => Promise<void>;
   stopWatching: () => Promise<void>;
   onPlaylistUpdated: (callback: (playlist: VideoFile[]) => void) => () => void;

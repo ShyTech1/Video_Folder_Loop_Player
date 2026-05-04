@@ -3,9 +3,14 @@ import type { Settings, VideoFile } from '../renderer/types';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   selectFolder: (): Promise<string | null> => ipcRenderer.invoke('selectFolder'),
+  selectVideos: (): Promise<string[] | null> => ipcRenderer.invoke('selectVideos'),
   getSettings: (): Promise<Settings> => ipcRenderer.invoke('getSettings'),
   saveSettings: (settings: Settings): Promise<void> => ipcRenderer.invoke('saveSettings', settings),
   scanFolder: (path: string): Promise<VideoFile[]> => ipcRenderer.invoke('scanFolder', path),
+  addVideosToFolder: (folderPath: string, sourcePaths: string[]): Promise<VideoFile[]> =>
+    ipcRenderer.invoke('addVideosToFolder', folderPath, sourcePaths),
+  removeVideo: (folderPath: string, videoPath: string): Promise<void> =>
+    ipcRenderer.invoke('removeVideo', folderPath, videoPath),
   startWatching: (path: string): Promise<void> => ipcRenderer.invoke('startWatching', path),
   stopWatching: (): Promise<void> => ipcRenderer.invoke('stopWatching'),
   onPlaylistUpdated: (callback: (playlist: VideoFile[]) => void) => {

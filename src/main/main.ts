@@ -6,6 +6,19 @@ import { registerIpcHandlers } from './ipcHandlers';
 const devServerUrl = process.env.VITE_DEV_SERVER_URL ?? 'http://localhost:5173';
 const videoProtocolPrefix = 'local-video://file/';
 
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'local-video',
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      stream: true,
+      corsEnabled: true
+    }
+  }
+]);
+
 function registerVideoProtocol(): void {
   protocol.handle('local-video', (request) => {
     const encodedPath = request.url.slice(videoProtocolPrefix.length);
