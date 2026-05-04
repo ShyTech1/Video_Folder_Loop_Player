@@ -4,6 +4,7 @@ import type { Settings } from '../renderer/types';
 const defaultSettings: Settings = {
   folderPath: '',
   muted: true,
+  volume: 0.6,
   showControls: false,
   fullscreen: false,
   playlistOrder: []
@@ -22,6 +23,7 @@ export function getSettings(): Settings {
   return {
     folderPath: store.get('folderPath', defaultSettings.folderPath),
     muted: store.get('muted', defaultSettings.muted),
+    volume: store.get('volume', defaultSettings.volume),
     showControls: store.get('showControls', defaultSettings.showControls),
     fullscreen: store.get('fullscreen', defaultSettings.fullscreen),
     playlistOrder: store.get('playlistOrder', defaultSettings.playlistOrder)
@@ -31,6 +33,7 @@ export function getSettings(): Settings {
 export function saveSettings(settings: Settings): void {
   store.set('folderPath', settings.folderPath);
   store.set('muted', settings.muted);
+  store.set('volume', settings.volume);
   store.set('showControls', settings.showControls);
   store.set('fullscreen', settings.fullscreen);
   store.set('playlistOrder', settings.playlistOrder);

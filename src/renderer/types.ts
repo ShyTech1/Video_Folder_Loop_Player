@@ -12,6 +12,7 @@ export interface VideoFile {
 export interface Settings {
   folderPath: string;
   muted: boolean;
+  volume: number;
   showControls: boolean;
   fullscreen: boolean;
   playlistOrder: string[];
