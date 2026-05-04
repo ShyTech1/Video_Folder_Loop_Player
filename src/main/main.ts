@@ -1,6 +1,7 @@
 import { app, BrowserWindow, net, protocol } from 'electron';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { startAutoUpdates } from './autoUpdater';
 import { registerIpcHandlers } from './ipcHandlers';
 
 const devServerUrl = process.env.VITE_DEV_SERVER_URL ?? 'http://localhost:5173';
@@ -59,11 +60,13 @@ function createWindow(): BrowserWindow {
 
 app.whenReady().then(() => {
   registerVideoProtocol();
-  createWindow();
+  const window = createWindow();
+  startAutoUpdates(window);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+      const window = createWindow();
+      startAutoUpdates(window);
     }
   });
 });

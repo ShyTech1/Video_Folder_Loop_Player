@@ -2,6 +2,8 @@
   "name": "video-folder-loop-player",
   "version": "1.0.0",
   "private": true,
+  "description": "Desktop video folder loop player.",
+  "author": "ShyTech1",
   "main": "dist/main/main.js",
   "scripts": {
     "dev": "concurrently \"npm run dev:renderer\" \"npm run dev:main\" \"npm run dev:electron\"",
@@ -10,6 +12,9 @@
     "dev:electron": "wait-on tcp:5173 file:dist/main/main.js && electron dist/main/main.js",
     "build": "npm run build:main && vite build",
     "build:main": "tsc -p tsconfig.main.json",
+    "pack": "npm run build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false ELECTRON_BUILDER_RCEDIT_PATH=node_modules/rcedit/bin electron-builder --dir",
+    "dist": "npm run build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false ELECTRON_BUILDER_RCEDIT_PATH=node_modules/rcedit/bin electron-builder",
+    "dist:win": "npm run build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false ELECTRON_BUILDER_RCEDIT_PATH=node_modules/rcedit/bin electron-builder --win nsis portable",
     "start": "electron .",
     "typecheck": "tsc --noEmit -p tsconfig.main.json && tsc --noEmit -p tsconfig.renderer.json",
     "audit:prod": "npm audit --omit=dev --audit-level=high",
@@ -18,6 +23,7 @@
   "dependencies": {
     "chokidar": "^4.0.3",
     "electron-store": "^10.1.0",
+    "electron-updater": "^6.8.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
@@ -27,9 +33,62 @@
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",
     "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
     "electron": "^36.2.1",
+    "electron-builder": "^26.8.1",
+    "rcedit": "^5.0.2",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
     "wait-on": "^8.0.3"
+  },
+  "build": {
+    "appId": "com.shytech1.video-folder-loop-player",
+    "productName": "Video Folder Loop Player",
+    "asar": true,
+    "directories": {
+      "output": "release-artifacts"
+    },
+    "toolsets": {
+      "winCodeSign": "1.1.0"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "win": {
+      "signAndEditExecutable": false,
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "artifactName": "${productName}-Setup-${version}-${arch}.${ext}",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "${productName}"
+    },
+    "portable": {
+      "artifactName": "${productName}-Portable-${version}-${arch}.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "ShyTech1",
+        "repo": "Video_Folder_Loop_Player"
+      }
+    ]
   }
 }

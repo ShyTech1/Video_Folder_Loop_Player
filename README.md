@@ -43,3 +43,26 @@ Then run compose commands again.
 npm install
 npm run dev
 ```
+
+## Windows installer, portable app, and auto-update
+
+Build both Windows release formats:
+
+```bash
+npm run dist:win
+```
+
+The generated files are written to `release-artifacts/`:
+
+- `Video Folder Loop Player-Setup-<version>-x64.exe` is the recommended installer. This build supports automatic updates.
+- `Video Folder Loop Player-Portable-<version>-x64.exe` can be copied to another Windows computer, but should be updated manually by replacing it with a newer portable build.
+
+Automatic updates are published through GitHub Releases. To publish a new update:
+
+```bash
+npm version patch
+git push
+git push --tags
+```
+
+The `Release` GitHub Actions workflow builds the Windows installer, portable executable, and update metadata. Users who installed the setup version will receive updates from the matching GitHub release.
