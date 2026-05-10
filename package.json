@@ -1,6 +1,6 @@
 {
   "name": "video-folder-loop-player",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "description": "Desktop video folder loop player.",
   "author": "ShyTech1",
@@ -92,6 +92,7 @@
     ]
   }
 }
+
 
 
 
