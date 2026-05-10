@@ -18,12 +18,12 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.4.0
         with:
           node-version: 22
           cache: npm
@@ -48,11 +48,10 @@ jobs:
           $tag = "v$version"
           git fetch --tags --force
 
-          # git rev-parse exits with code 128 when the tag does not exist.
-          # Suppress the non-zero exit so PowerShell does not throw before we
-          # can inspect $LASTEXITCODE ourselves.
-          git rev-parse -q --verify "refs/tags/$tag" 2>$null
-          if ($LASTEXITCODE -eq 0) {
+          # git tag -l always exits 0 — returns the tag name if it exists,
+          # empty string if it does not. Avoids the exit-code 128 issue with
+          # git rev-parse on PowerShell 7.
+          if (git tag -l $tag) {
             throw "Tag $tag already exists. Use a new release branch version."
           }
 
