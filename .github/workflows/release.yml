@@ -48,7 +48,11 @@ jobs:
           $tag = "v$version"
           git fetch --tags --force
 
-          if (git rev-parse -q --verify "refs/tags/$tag") {
+          # git rev-parse exits with code 128 when the tag does not exist.
+          # Suppress the non-zero exit so PowerShell does not throw before we
+          # can inspect $LASTEXITCODE ourselves.
+          git rev-parse -q --verify "refs/tags/$tag" 2>$null
+          if ($LASTEXITCODE -eq 0) {
             throw "Tag $tag already exists. Use a new release branch version."
           }
 
