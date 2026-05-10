@@ -314,15 +314,15 @@ export default function App() {
         <div className="hero-stats" aria-label="Playback overview">
           <div className="stat-card">
             <span className="stat-label">Now playing</span>
-            <strong>{currentVideo?.name || 'No video selected'}</strong>
+            <strong>{currentVideo?.name || 'Nothing playing yet'}</strong>
           </div>
           <div className="stat-card">
-            <span className="stat-label">Next up</span>
-            <strong>{nextVideo?.name || 'Waiting for more videos'}</strong>
+            <span className="stat-label">Up next</span>
+            <strong>{nextVideo?.name || 'Nothing queued'}</strong>
           </div>
           <div className="stat-card">
-            <span className="stat-label">Queue size</span>
-            <strong>{readyPlaylist.length} file{readyPlaylist.length === 1 ? '' : 's'}</strong>
+            <span className="stat-label">In the queue</span>
+            <strong>{readyPlaylist.length === 0 ? 'Empty' : `${readyPlaylist.length} video${readyPlaylist.length === 1 ? '' : 's'}`}</strong>
           </div>
         </div>
       </header>
@@ -333,15 +333,15 @@ export default function App() {
         <section className="player-panel">
           <div className="panel-heading">
             <div>
-              <p className="section-label">Display Preview</p>
-              <h2>{currentVideo?.name || 'Ready for the first activity video'}</h2>
+              <p className="section-label">Live Preview</p>
+              <h2>{currentVideo?.name || 'Nothing playing yet'}</h2>
               <p className="section-description">
-                {nextVideo ? `Next in line: ${nextVideo.name}` : 'Add videos to build the loop.'}
+                {nextVideo ? `Up next: ${nextVideo.name}` : 'Add videos to the queue to start the loop.'}
               </p>
             </div>
             <div className="player-status">
               <span className={`status-pill${isPaused ? ' is-paused' : ''}`}>
-                {currentVideo ? (isPaused ? 'Paused' : 'Playing') : 'Idle'}
+                {currentVideo ? (isPaused ? 'Paused' : 'Playing') : 'Stopped'}
               </span>
             </div>
           </div>
@@ -367,7 +367,7 @@ export default function App() {
               />
             </label>
             <button type="button" className="status-pill status-toggle" onClick={setMuted}>
-              Audio ({settings.muted ? 'Off' : 'On'})
+              {settings.muted ? 'Unmute' : 'Mute'}
             </button>
             <button type="button" onClick={toggleFullscreen}>
               {settings.fullscreen ? 'Exit Fullscreen' : 'Fullscreen'}

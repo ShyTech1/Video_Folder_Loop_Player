@@ -33,9 +33,9 @@ export function PlaylistManager({
     <section className="playlist-panel">
       <div className="playlist-header">
         <div>
-          <p className="section-label">Queue Control</p>
+          <p className="section-label">Video Queue</p>
           <h2>Playlist</h2>
-          <p>Change the order, play an item immediately, or remove files without stopping the loop.</p>
+          <p>Reorder, skip, or remove videos — the screen keeps playing while you make changes.</p>
         </div>
         <div className="playlist-actions">
           <button type="button" onClick={onSkipNext} disabled={playlist.length === 0}>
@@ -48,7 +48,7 @@ export function PlaylistManager({
       </div>
 
       {playlist.length === 0 ? (
-        <div className="playlist-empty">No videos loaded yet.</div>
+        <div className="playlist-empty">No videos yet — add some files to start the loop.</div>
       ) : (
         <ul className="playlist-list">
           {playlist.map((video, index) => (
