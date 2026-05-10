@@ -29,6 +29,7 @@ export interface ElectronAPI {
   removeVideo: (folderPath: string, videoPath: string) => Promise<void>;
   startWatching: (path: string) => Promise<void>;
   stopWatching: () => Promise<void>;
+  checkForUpdates: () => Promise<{ status: 'checking' | 'ready' | 'unavailable'; reason?: string }>;
   onPlaylistUpdated: (callback: (playlist: VideoFile[]) => void) => () => void;
   onFileAdded: (callback: (video: VideoFile) => void) => () => void;
   onFileRemoved: (callback: (video: VideoFile) => void) => () => void;

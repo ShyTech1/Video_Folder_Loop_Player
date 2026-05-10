@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('removeVideo', folderPath, videoPath),
   startWatching: (path: string): Promise<void> => ipcRenderer.invoke('startWatching', path),
   stopWatching: (): Promise<void> => ipcRenderer.invoke('stopWatching'),
+  checkForUpdates: () => ipcRenderer.invoke('checkForUpdates'),
   onPlaylistUpdated: (callback: (playlist: VideoFile[]) => void) => {
     const channel = 'playlist-updated';
     const handler = (_event: Electron.IpcRendererEvent, playlist: VideoFile[]) => callback(playlist);

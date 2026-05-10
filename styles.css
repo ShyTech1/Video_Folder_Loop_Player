@@ -436,7 +436,10 @@ button:disabled {
 }
 
 .app-footer {
-  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
   padding-top: 8px;
 }
 
@@ -444,4 +447,20 @@ button:disabled {
   font-size: 11px;
   color: #9a9484;
   letter-spacing: 0.04em;
+}
+
+.update-button {
+  font-size: 11px;
+  padding: 3px 10px;
+  background: transparent;
+  border: 1px solid #c8c2b4;
+  border-radius: 20px;
+  color: #6b6456;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.update-button:hover {
+  background: #ede9df;
+  color: #172033;
 }

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, powerMonitor } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, powerMonitor } from 'electron';
 import { autoUpdater } from 'electron-updater';
 
 const initialUpdateCheckDelayMs = 3000;
@@ -23,12 +23,16 @@ export function startAutoUpdates(window: BrowserWindow): void {
   const isPortableBuild = Boolean(process.env.PORTABLE_EXECUTABLE_FILE || process.env.PORTABLE_EXECUTABLE_DIR);
 
   if (!app.isPackaged || updateCheckStarted || isPortableBuild) {
+    ipcMain.handle('checkForUpdates', async () => {
+      return { status: 'unavailable', reason: isPortableBuild ? 'portable' : 'dev' };
+    });
     return;
   }
 
   updateCheckStarted = true;
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.logger = console;
 
   const checkForUpdates = (): void => {
     if (updateCheckInProgress || updateDownloadInProgress || updateDownloaded) {
@@ -94,6 +98,14 @@ export function startAutoUpdates(window: BrowserWindow): void {
       .finally(() => {
         updatePromptOpen = false;
       });
+  });
+
+  ipcMain.handle('checkForUpdates', async () => {
+    if (updateDownloaded) {
+      return { status: 'ready' };
+    }
+    checkForUpdates();
+    return { status: 'checking' };
   });
 
   setTimeout(checkForUpdates, initialUpdateCheckDelayMs);
