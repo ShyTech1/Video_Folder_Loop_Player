@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import type { VideoFile } from './types';
 
 interface Props {
@@ -19,11 +19,60 @@ export interface VideoPlayerHandle {
   clear: () => void;
 }
 
+const MIME_TYPES: Record<string, string> = {
+  mp4: 'video/mp4',
+  webm: 'video/webm',
+  mov: 'video/mp4',
+  mkv: 'video/x-matroska',
+  avi: 'video/x-msvideo'
+};
+
+function getMimeType(filePath: string): string {
+  const ext = filePath.split('.').pop()?.toLowerCase() ?? '';
+  return MIME_TYPES[ext] ?? 'video/mp4';
+}
+
 export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPlayer(
   { currentVideo, muted, volume, showControls, fullscreen, paused, onEnded, onError, onPlaybackStateChange }: Props,
   ref
 ) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+
+  // Read the video file into memory and create a Blob URL.
+  // The file handle is opened, read, and closed immediately — no OS lock
+  // is held during playback, so deletion works at any time.
+  useEffect(() => {
+    if (!currentVideo) {
+      setBlobUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+      return;
+    }
+
+    let cancelled = false;
+
+    window.electronAPI.readVideoFile(currentVideo.path).then((buffer) => {
+      if (cancelled) return;
+      const blob = new Blob([buffer], { type: getMimeType(currentVideo.path) });
+      const url = URL.createObjectURL(blob);
+      setBlobUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return url;
+      });
+    }).catch(() => {
+      if (!cancelled) onError();
+    });
+
+    return () => {
+      cancelled = true;
+      setBlobUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+    };
+  }, [currentVideo?.id]);
 
   useImperativeHandle(ref, () => ({
     pause: () => {
@@ -35,13 +84,15 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
       }
     },
     clear: () => {
-      if (!videoRef.current) {
-        return;
+      setBlobUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.removeAttribute('src');
+        videoRef.current.load();
       }
-
-      videoRef.current.pause();
-      videoRef.current.removeAttribute('src');
-      videoRef.current.load();
     }
   }), []);
 
@@ -78,23 +129,19 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
     videoRef.current.volume = volume;
   }, [volume]);
 
-  const videoSrc = useMemo(() => {
-    if (!currentVideo) {
-      return '';
-    }
-
-    return `local-video://file/${encodeURIComponent(currentVideo.path)}`;
-  }, [currentVideo]);
-
   if (!currentVideo) {
     return <div className="empty-state">No videos in selected folder</div>;
+  }
+
+  if (!blobUrl) {
+    return <div className="empty-state">Loading...</div>;
   }
 
   return (
     <video
       ref={videoRef}
       key={currentVideo.id}
-      src={videoSrc}
+      src={blobUrl}
       autoPlay
       muted={muted}
       controls={showControls}

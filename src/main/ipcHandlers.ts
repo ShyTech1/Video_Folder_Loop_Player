@@ -1,5 +1,5 @@
 import { dialog, ipcMain, shell } from 'electron';
-import { access, copyFile } from 'node:fs/promises';
+import { access, copyFile, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { FolderWatcher } from './folderWatcher';
 import { getSettings, saveSettings } from './settingsStore';
@@ -52,7 +52,26 @@ async function createUniqueDestinationPath(folderPath: string, fileName: string)
   }
 }
 
+const IPC_CHANNELS = [
+  'selectFolder',
+  'selectVideos',
+  'getSettings',
+  'saveSettings',
+  'scanFolder',
+  'addVideosToFolder',
+  'readVideoFile',
+  'removeVideo',
+  'startWatching',
+  'stopWatching'
+] as const;
+
 export function registerIpcHandlers(window: BrowserWindow): void {
+  // Remove any previously registered handlers so re-registration on
+  // hot-reload or window recreate never throws "handler already exists".
+  for (const channel of IPC_CHANNELS) {
+    ipcMain.removeHandler(channel);
+  }
+
   ipcMain.handle('selectFolder', async () => {
     const result = await dialog.showOpenDialog(window, {
       properties: ['openDirectory']
@@ -116,6 +135,10 @@ export function registerIpcHandlers(window: BrowserWindow): void {
     );
 
     return added.filter((video): video is NonNullable<typeof video> => video !== null);
+  });
+
+  ipcMain.handle('readVideoFile', async (_event, videoPath: string) => {
+    return readFile(videoPath);
   });
 
   ipcMain.handle('removeVideo', async (_event, folderPath: string, videoPath: string) => {

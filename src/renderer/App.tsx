@@ -280,8 +280,6 @@ export default function App() {
       setCurrentIndex(0);
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 250));
-
     try {
       await window.electronAPI.removeVideo(settings.folderPath, videoPath);
       setRemovingVideoPath(null);
