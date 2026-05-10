@@ -398,6 +398,10 @@ export default function App() {
           onSkipNext={advanceToNext}
         />
       </div>
+
+      <footer className="app-footer">
+        <span className="app-version">v{__APP_VERSION__}</span>
+      </footer>
     </main>
   );
 }

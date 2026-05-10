@@ -434,3 +434,14 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+.app-footer {
+  text-align: right;
+  padding-top: 8px;
+}
+
+.app-version {
+  font-size: 11px;
+  color: #9a9484;
+  letter-spacing: 0.04em;
+}
