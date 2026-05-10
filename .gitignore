@@ -10,3 +10,7 @@ pnpm-debug.log*
 Thumbs.db
 coverage/
 *.tsbuildinfo
+release/
+release-build/
+release-output/
+release-artifacts/

@@ -1,0 +1,124 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - "release/*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Validate release branch and version
+        id: release
+        shell: pwsh
+        run: |
+          $branchName = "${{ github.ref_name }}"
+
+          if ($branchName -notmatch '^release/(?<version>\d+\.\d+\.\d+)$') {
+            throw "Release workflow must run from a branch named release/x.y.z. Current branch: $branchName"
+          }
+
+          $version = $Matches.version
+          $packageVersion = (Get-Content package.json -Raw | ConvertFrom-Json).version
+
+          if ($packageVersion -ne $version) {
+            throw "package.json version ($packageVersion) must match release branch version ($version)."
+          }
+
+          $tag = "v$version"
+          git fetch --tags --force
+
+          if (git rev-parse -q --verify "refs/tags/$tag") {
+            throw "Tag $tag already exists. Use a new release branch version."
+          }
+
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run production dependency audit
+        run: npm run audit:prod
+
+      - name: Build Windows release artifacts
+        run: npm run dist:win -- --publish never
+
+      - name: Verify Windows release artifacts
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          $requiredFiles = @(
+            "release-artifacts/latest.yml",
+            "release-artifacts/Video Folder Loop Player-Setup-$env:RELEASE_VERSION-x64.exe",
+            "release-artifacts/Video Folder Loop Player-Setup-$env:RELEASE_VERSION-x64.exe.blockmap",
+            "release-artifacts/Video Folder Loop Player-Portable-$env:RELEASE_VERSION-x64.exe"
+          )
+
+          foreach ($file in $requiredFiles) {
+            if (-not (Test-Path -LiteralPath $file)) {
+              throw "Missing expected release artifact: $file"
+            }
+          }
+
+      - name: Publish GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          $files = Get-ChildItem -Path "release-artifacts" -File |
+            Where-Object { $_.Name -match '\.(exe|blockmap|yml)$' } |
+            ForEach-Object { $_.FullName }
+
+          $notes = @(
+            "Windows release built from ${{ github.ref_name }} after CI checks passed.",
+            "",
+            "Installed users receive this version through Electron auto-update."
+          ) -join [Environment]::NewLine
+
+          $args = @(
+            "release",
+            "create",
+            $env:RELEASE_TAG
+          ) + $files + @(
+            "--target",
+            "${{ github.sha }}",
+            "--title",
+            "Video Folder Loop Player $env:RELEASE_VERSION",
+            "--notes",
+            $notes
+          )
+
+          gh @args
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: release-artifacts/*
