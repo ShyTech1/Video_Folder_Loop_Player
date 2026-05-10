@@ -55,7 +55,10 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
 
     window.electronAPI.readVideoFile(currentVideo.path).then((buffer) => {
       if (cancelled) return;
-      const blob = new Blob([buffer], { type: getMimeType(currentVideo.path) });
+      // Slice to a plain ArrayBuffer — IPC returns Uint8Array<ArrayBufferLike>
+      // which TypeScript won't accept as BlobPart directly.
+      const ab = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer;
+      const blob = new Blob([ab], { type: getMimeType(currentVideo.path) });
       const url = URL.createObjectURL(blob);
       setBlobUrl((prev) => {
         if (prev) URL.revokeObjectURL(prev);
