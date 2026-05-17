@@ -20,9 +20,13 @@ function getDialogWindow(preferredWindow: BrowserWindow): BrowserWindow | undefi
 }
 
 export function startAutoUpdates(window: BrowserWindow): void {
+  if (updateCheckStarted) {
+    return;
+  }
+
   const isPortableBuild = Boolean(process.env.PORTABLE_EXECUTABLE_FILE || process.env.PORTABLE_EXECUTABLE_DIR);
 
-  if (!app.isPackaged || updateCheckStarted || isPortableBuild) {
+  if (!app.isPackaged || isPortableBuild) {
     ipcMain.handle('checkForUpdates', async () => {
       return { status: 'unavailable', reason: isPortableBuild ? 'portable' : 'dev' };
     });
