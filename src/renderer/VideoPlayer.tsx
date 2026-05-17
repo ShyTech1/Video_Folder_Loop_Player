@@ -103,7 +103,9 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
     if (fullscreen && videoRef.current) {
       void videoRef.current.requestFullscreen().catch(() => undefined);
     }
-  }, [fullscreen]);
+    // blobUrl is included so fullscreen is re-requested when a new video element
+    // mounts after auto-advance (the old element's removal exits fullscreen).
+  }, [fullscreen, blobUrl]);
 
   useEffect(() => {
     if (videoRef.current) {
