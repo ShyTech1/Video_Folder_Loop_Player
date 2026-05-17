@@ -62,7 +62,8 @@ const IPC_CHANNELS = [
   'readVideoFile',
   'removeVideo',
   'startWatching',
-  'stopWatching'
+  'stopWatching',
+  'setFullScreen'
 ] as const;
 
 export function registerIpcHandlers(window: BrowserWindow): void {
@@ -158,5 +159,17 @@ export function registerIpcHandlers(window: BrowserWindow): void {
 
   ipcMain.handle('stopWatching', async () => {
     await watcher.stop();
+  });
+
+  ipcMain.handle('setFullScreen', (_event, flag: boolean) => {
+    window.setFullScreen(flag);
+  });
+
+  window.on('enter-full-screen', () => {
+    window.webContents.send('fullscreen-changed', true);
+  });
+
+  window.on('leave-full-screen', () => {
+    window.webContents.send('fullscreen-changed', false);
   });
 }

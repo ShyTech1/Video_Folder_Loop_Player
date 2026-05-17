@@ -109,6 +109,12 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    return window.electronAPI.onFullscreenChanged((flag) => {
+      setSettings((prev) => ({ ...prev, fullscreen: flag }));
+    });
+  }, []);
+
+  useEffect(() => {
     const offAdded = window.electronAPI.onFileAdded((video) => {
       setPlaylist((current) => {
         const withoutExisting = current.filter((item) => item.id !== video.id);

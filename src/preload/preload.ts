@@ -44,5 +44,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const handler = () => callback();
     ipcRenderer.on(channel, handler);
     return () => ipcRenderer.removeListener(channel, handler);
+  },
+  setFullScreen: (flag: boolean): Promise<void> => ipcRenderer.invoke('setFullScreen', flag),
+  onFullscreenChanged: (callback: (flag: boolean) => void) => {
+    const channel = 'fullscreen-changed';
+    const handler = (_event: Electron.IpcRendererEvent, flag: boolean) => callback(flag);
+    ipcRenderer.on(channel, handler);
+    return () => ipcRenderer.removeListener(channel, handler);
   }
 });

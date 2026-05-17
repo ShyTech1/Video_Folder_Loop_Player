@@ -35,6 +35,8 @@ export interface ElectronAPI {
   onFileRemoved: (callback: (video: VideoFile) => void) => () => void;
   onFileFailed: (callback: (video: VideoFile) => void) => () => void;
   onFolderMissing: (callback: () => void) => () => void;
+  setFullScreen: (flag: boolean) => Promise<void>;
+  onFullscreenChanged: (callback: (flag: boolean) => void) => () => void;
 }
 
 declare global {

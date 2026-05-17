@@ -100,9 +100,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
   }), []);
 
   useEffect(() => {
-    if (fullscreen && videoRef.current) {
-      void videoRef.current.requestFullscreen().catch(() => undefined);
-    }
+    void window.electronAPI.setFullScreen(fullscreen);
   }, [fullscreen]);
 
   useEffect(() => {
