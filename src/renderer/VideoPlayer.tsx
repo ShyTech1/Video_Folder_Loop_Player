@@ -100,12 +100,8 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
   }), []);
 
   useEffect(() => {
-    if (fullscreen && videoRef.current) {
-      void videoRef.current.requestFullscreen().catch(() => undefined);
-    }
-    // blobUrl is included so fullscreen is re-requested when a new video element
-    // mounts after auto-advance (the old element's removal exits fullscreen).
-  }, [fullscreen, blobUrl]);
+    void window.electronAPI.setFullScreen(fullscreen);
+  }, [fullscreen]);
 
   useEffect(() => {
     if (videoRef.current) {
