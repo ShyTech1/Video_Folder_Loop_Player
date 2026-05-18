@@ -416,15 +416,21 @@ export default function App() {
           type="button"
           className="update-button"
           onClick={() => {
-            void window.electronAPI.checkForUpdates().then(({ status }) => {
-              if (status === 'ready') {
-                alert('An update has already been downloaded. Restart the app to install it.');
-              } else if (status === 'checking') {
-                alert('Checking for updates… if one is available it will download and you\'ll be prompted to restart.');
-              } else {
-                alert('Updates are not available in this version of the app.');
-              }
-            });
+            void window.electronAPI
+              .checkForUpdates()
+              .then(({ status }) => {
+                if (status === 'ready') {
+                  alert('An update has already been downloaded. Restart the app to install it.');
+                } else if (status === 'checking') {
+                  alert('Checking for updates… if one is available it will download and you\'ll be prompted to restart.');
+                } else {
+                  alert('Updates are not available in this version of the app.');
+                }
+              })
+              .catch((error: unknown) => {
+                const message = error instanceof Error ? error.message : String(error);
+                alert(`Couldn't check for updates: ${message}`);
+              });
           }}
         >
           Check for updates
