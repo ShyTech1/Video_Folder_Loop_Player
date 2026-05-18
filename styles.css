@@ -464,3 +464,79 @@ button:disabled {
   background: #ede9df;
   color: #172033;
 }
+
+.app.is-fullscreen {
+  padding: 0;
+  gap: 0;
+  background: #000;
+  min-height: 100vh;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.app.is-fullscreen > .hero-panel,
+.app.is-fullscreen > .folder-selector,
+.app.is-fullscreen > .app-footer,
+.app.is-fullscreen .panel-heading,
+.app.is-fullscreen .status-message,
+.app.is-fullscreen .controls,
+.app.is-fullscreen .playlist-panel {
+  display: none;
+}
+
+.app.is-fullscreen .app-shell {
+  display: block;
+  grid-template-columns: none;
+  height: 100vh;
+  width: 100vw;
+  gap: 0;
+}
+
+.app.is-fullscreen .player-panel {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #000;
+  box-shadow: none;
+  backdrop-filter: none;
+  gap: 0;
+  height: 100vh;
+  width: 100vw;
+}
+
+.app.is-fullscreen .video-player {
+  width: 100vw;
+  height: 100vh;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  object-fit: contain;
+  background: #000;
+}
+
+.app.is-fullscreen .empty-state {
+  width: 100vw;
+  height: 100vh;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+  background: #000;
+  color: #aab;
+}
+
+.fullscreen-exit {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 100;
+  opacity: 0.25;
+  transition: opacity 0.18s ease;
+  font-size: 12px;
+  padding: 6px 14px;
+}
+
+.fullscreen-exit:hover {
+  opacity: 1;
+}

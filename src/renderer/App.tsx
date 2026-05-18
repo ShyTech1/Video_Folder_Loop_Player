@@ -307,7 +307,12 @@ export default function App() {
   };
 
   return (
-    <main className="app">
+    <main className={`app${settings.fullscreen ? ' is-fullscreen' : ''}`}>
+      {settings.fullscreen ? (
+        <button type="button" className="fullscreen-exit" onClick={toggleFullscreen}>
+          Exit Fullscreen
+        </button>
+      ) : null}
       <header className="hero-panel">
         <div className="hero-copy">
           <p className="eyebrow">Wide Screen Activity Loop</p>
