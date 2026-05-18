@@ -25,7 +25,6 @@ export interface ElectronAPI {
   saveSettings: (settings: Settings) => Promise<void>;
   scanFolder: (path: string) => Promise<VideoFile[]>;
   addVideosToFolder: (folderPath: string, sourcePaths: string[]) => Promise<VideoFile[]>;
-  readVideoFile: (path: string) => Promise<Uint8Array>;
   removeVideo: (folderPath: string, videoPath: string) => Promise<void>;
   startWatching: (path: string) => Promise<void>;
   stopWatching: () => Promise<void>;

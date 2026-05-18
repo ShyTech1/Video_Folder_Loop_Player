@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import type { VideoFile } from './types';
 
 interface Props {
@@ -19,17 +19,12 @@ export interface VideoPlayerHandle {
   clear: () => void;
 }
 
-const MIME_TYPES: Record<string, string> = {
-  mp4: 'video/mp4',
-  webm: 'video/webm',
-  mov: 'video/mp4',
-  mkv: 'video/x-matroska',
-  avi: 'video/x-msvideo'
-};
-
-function getMimeType(filePath: string): string {
-  const ext = filePath.split('.').pop()?.toLowerCase() ?? '';
-  return MIME_TYPES[ext] ?? 'video/mp4';
+// Stream via the local-video:// protocol registered in main.ts. The <video>
+// element issues HTTP range requests so files (including Google Drive
+// placeholders) only hydrate the bytes actually played, instead of being
+// fully downloaded up front.
+function getVideoSrc(filePath: string): string {
+  return `local-video://file/${encodeURIComponent(filePath)}`;
 }
 
 export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPlayer(
@@ -37,45 +32,6 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
   ref
 ) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
-
-  // Read the video file into memory and create a Blob URL.
-  // The file handle is opened, read, and closed immediately — no OS lock
-  // is held during playback, so deletion works at any time.
-  useEffect(() => {
-    if (!currentVideo) {
-      setBlobUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return null;
-      });
-      return;
-    }
-
-    let cancelled = false;
-
-    window.electronAPI.readVideoFile(currentVideo.path).then((buffer) => {
-      if (cancelled) return;
-      // Slice to a plain ArrayBuffer — IPC returns Uint8Array<ArrayBufferLike>
-      // which TypeScript won't accept as BlobPart directly.
-      const ab = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer;
-      const blob = new Blob([ab], { type: getMimeType(currentVideo.path) });
-      const url = URL.createObjectURL(blob);
-      setBlobUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return url;
-      });
-    }).catch(() => {
-      if (!cancelled) onError();
-    });
-
-    return () => {
-      cancelled = true;
-      setBlobUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return null;
-      });
-    };
-  }, [currentVideo?.id]);
 
   useImperativeHandle(ref, () => ({
     pause: () => {
@@ -86,11 +42,10 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
         void videoRef.current.play().catch(() => undefined);
       }
     },
+    // Release the active source synchronously. Called before deleting the
+    // currently-playing file so shell.trashItem doesn't race with in-flight
+    // range reads.
     clear: () => {
-      setBlobUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return null;
-      });
       if (videoRef.current) {
         videoRef.current.pause();
         videoRef.current.removeAttribute('src');
@@ -134,15 +89,11 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
     return <div className="empty-state">No videos in selected folder</div>;
   }
 
-  if (!blobUrl) {
-    return <div className="empty-state">Loading...</div>;
-  }
-
   return (
     <video
       ref={videoRef}
       key={currentVideo.id}
-      src={blobUrl}
+      src={getVideoSrc(currentVideo.path)}
       autoPlay
       muted={muted}
       controls={showControls}

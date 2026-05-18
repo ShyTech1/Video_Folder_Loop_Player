@@ -1,5 +1,5 @@
 import { dialog, ipcMain, shell } from 'electron';
-import { access, copyFile, readFile } from 'node:fs/promises';
+import { access, copyFile } from 'node:fs/promises';
 import path from 'node:path';
 import { FolderWatcher } from './folderWatcher';
 import { getSettings, saveSettings } from './settingsStore';
@@ -59,7 +59,6 @@ const IPC_CHANNELS = [
   'saveSettings',
   'scanFolder',
   'addVideosToFolder',
-  'readVideoFile',
   'removeVideo',
   'startWatching',
   'stopWatching',
@@ -136,10 +135,6 @@ export function registerIpcHandlers(window: BrowserWindow): void {
     );
 
     return added.filter((video): video is NonNullable<typeof video> => video !== null);
-  });
-
-  ipcMain.handle('readVideoFile', async (_event, videoPath: string) => {
-    return readFile(videoPath);
   });
 
   ipcMain.handle('removeVideo', async (_event, folderPath: string, videoPath: string) => {

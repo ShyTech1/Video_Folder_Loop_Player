@@ -9,7 +9,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   scanFolder: (path: string): Promise<VideoFile[]> => ipcRenderer.invoke('scanFolder', path),
   addVideosToFolder: (folderPath: string, sourcePaths: string[]): Promise<VideoFile[]> =>
     ipcRenderer.invoke('addVideosToFolder', folderPath, sourcePaths),
-  readVideoFile: (path: string): Promise<Uint8Array> => ipcRenderer.invoke('readVideoFile', path),
   removeVideo: (folderPath: string, videoPath: string): Promise<void> =>
     ipcRenderer.invoke('removeVideo', folderPath, videoPath),
   startWatching: (path: string): Promise<void> => ipcRenderer.invoke('startWatching', path),
